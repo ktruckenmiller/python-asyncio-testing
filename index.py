@@ -4,38 +4,33 @@ import random
 
 import boto3
 from botocore.config import Config
-import aioboto3
-import aioify
-from concurrent.futures import ProcessPoolExecutor
 
-cloudformation = boto3.client('cloudformation')
+from asgiref.sync import sync_to_async
+
+
+
 
 class SomeObject():
     def __init__(self):
-
+        self.cf = boto3.client('cloudformation')
         self.age = 0
 
-# def list_stacks():
-#     print('boston')
-#     return ()
+@sync_to_async
+def list_stacks(some_obj):
+    print(f'Age of this guy {some_obj.age:2f}')
+    return some_obj.cf.list_stacks()
 
-boston = aioify(obj=cloudformation.list_stacks, name='blahs')
 
 async def worker(name, queue, started_at):
     while True:
         some_obj = await queue.get()
 
-        # async with aioboto3.client('cloudformation', config=Config(retries = {
-        #       'max_attempts': 10,
-        #       'mode': 'standard'
-        #    })) as cf:
-        #    await cf.list_stacks()
-        await boston()
+        await list_stacks(some_obj)
         queue.task_done()
         print(f'{name} took about {(time.monotonic() - started_at):.2f} seconds')
 
 async def main():
-    worker_num = 1
+    worker_num = 100
     queue = asyncio.Queue()
     total_sleep_time = 0
 
