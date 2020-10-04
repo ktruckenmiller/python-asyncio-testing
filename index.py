@@ -18,15 +18,21 @@ class SomeObject():
 @sync_to_async
 def list_stacks(some_obj):
     print(f'Age of this guy {some_obj.age:2f}')
-    return some_obj.cf.list_stacks()
+    try:
+        res = some_obj.cf.list_stacks()
+    except Exception as err:
+        return False, err
+    return True, res
 
 
 async def worker(name, queue, started_at):
     while True:
         some_obj = await queue.get()
 
-        await list_stacks(some_obj)
+        succeeded, res = await list_stacks(some_obj)
         queue.task_done()
+        if not succeeded:
+            print(res)
         print(f'{name} took about {(time.monotonic() - started_at):.2f} seconds')
 
 async def main():
